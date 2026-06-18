@@ -36,6 +36,7 @@ class MockRodinProviderImpl implements RodinProvider {
   private jobs = new Map<string, Job>();
 
   async startGeneration(plan: RodinGenerationPlan): Promise<RodinStartResult> {
+    // Mock ignores the reference image; the real provider uses it (image-to-3D).
     const jobId = `mock-${plan.id}-${Date.now()}`;
     this.jobs.set(jobId, { plan, startedAt: Date.now() });
     return { jobId };

@@ -6,7 +6,10 @@ import { getRodinProvider } from '@/services/rodin';
 import type { RodinGenerationPlan } from '@/features/homework/types';
 
 export async function POST(request: Request): Promise<Response> {
-  const { plan } = (await request.json()) as { plan: RodinGenerationPlan };
-  const result = await getRodinProvider().startGeneration(plan);
+  const { plan, referenceImageBase64 } = (await request.json()) as {
+    plan: RodinGenerationPlan;
+    referenceImageBase64?: string;
+  };
+  const result = await getRodinProvider().startGeneration(plan, { referenceImageBase64 });
   return Response.json(result);
 }

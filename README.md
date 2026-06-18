@@ -95,6 +95,10 @@ The Studio tabs are **Tutor · Scan · Classify · XR**:
 5. Each generated GLB streams into the cross-runtime store and `GeneratedModelSlot` swaps
    the placeholder for `Viro3DObject` without resetting the scene; GLB load errors revert
    to the placeholder. No Horizon fallback — the scene renders on all targets.
+6. **Homework images in XR:** if the page has an illustration, Gemini returns its bounding
+   box (`diagramBox`), the scanner crops it (`cropDiagram`), and the scene shows it as a
+   `ViroImage` "From your homework" panel. The crop is also sent to Rodin as **image-to-3D**
+   input so the generated model matches the child's homework picture (text-to-3D otherwise).
 
 **Rodin seam:** components/routes depend only on `RodinProvider` (`src/services/rodin/`).
 `RealRodinProvider` calls Hyper3D Gen-2.5 (start → poll `status` → `download` GLB, one task

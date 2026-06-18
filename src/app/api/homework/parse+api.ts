@@ -23,7 +23,7 @@ export async function POST(request: Request): Promise<Response> {
         content: [
           {
             type: 'text',
-            text: 'Extract the homework subject, a short topic, lowercase keywords, and each distinct question from this homework photo. Do not answer the questions.',
+            text: 'Extract the homework subject, a short topic, lowercase keywords, and each distinct question from this homework photo. If the page contains a picture/diagram/illustration (e.g. a solar system image), return its bounding box as `diagramBox` normalized 0..1; otherwise set diagramBox to null. Do not answer the questions.',
           },
           { type: 'image', image: `data:${mimeType ?? 'image/jpeg'};base64,${imageBase64}` },
         ],

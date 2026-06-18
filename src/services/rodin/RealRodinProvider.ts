@@ -26,7 +26,7 @@ import type {
   RodinStartResult,
   XRGenerationJob,
 } from './types';
-import type { RodinProvider } from './RodinProvider';
+import type { RodinProvider, RodinStartOptions } from './RodinProvider';
 
 const BASE = process.env.RODIN_API_BASE ?? 'https://api.hyper3d.com/api/v2';
 // Rodin Gen-2.5. Override with RODIN_TIER if your account uses a different label.
@@ -51,8 +51,14 @@ function authHeaders(): Record<string, string> {
 class RealRodinProviderImpl implements RodinProvider {
   private jobs = new Map<string, Job>();
 
-  async startGeneration(plan: RodinGenerationPlan): Promise<RodinStartResult> {
+  async startGeneration(
+    plan: RodinGenerationPlan,
+    options?: RodinStartOptions,
+  ): Promise<RodinStartResult> {
     const jobId = `rodin-${plan.id}-${Date.now()}`;
+    // When the homework diagram is available, drive image-to-3D so the model
+    // matches the child's picture; otherwise text-to-3D from the prompt.
+    const referenceImage = options?.referenceImageBase64;
     const tasks: Task[] = [];
     for (const target of plan.assetTargets) {
       const form = new FormData();
@@ -61,6 +67,20 @@ class RealRodinProviderImpl implements RodinProvider {
       form.append('geometry_file_format', 'glb');
       form.append('material', 'PBR');
       form.append('mesh_mode', 'Raw');
+      if (referenceImage) {
+        // image-to-3D: attach the homework diagram as the reference image.
+        // (Server-side Node runtime; Buffer typed locally to avoid @types/node.)
+        const nodeBuffer = (globalThis as { Buffer?: { from(s: string, e: string): Uint8Array } })
+          .Buffer;
+        if (nodeBuffer) {
+          const bytes = nodeBuffer.from(referenceImage, 'base64');
+          form.append(
+            'images',
+            new Blob([bytes as unknown as BlobPart], { type: 'image/jpeg' }),
+            'homework.jpg',
+          );
+        }
+      }
       const res = await fetch(`${BASE}/rodin`, {
         method: 'POST',
         headers: authHeaders(),

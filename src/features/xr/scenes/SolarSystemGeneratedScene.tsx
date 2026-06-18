@@ -10,8 +10,12 @@ import {
   ViroAmbientLight,
   ViroARScene,
   ViroAnimations,
+  ViroImage,
   ViroMaterials,
   ViroOmniLight,
+  ViroText,
+  type ViroStyle,
+  type ViroTextStyle,
 } from '@reactvision/react-viro';
 
 import { useHomeworkStore } from '@/features/homework/homeworkStore';
@@ -40,14 +44,24 @@ function registerEntityMaterials(entities: XRSceneEntity[]): void {
   }
 }
 
+const refImageStyle: ViroStyle = { width: 0.8, height: 0.6 };
+const refLabelStyle: ViroTextStyle = {
+  fontSize: 11,
+  color: '#9AA6C2',
+  textAlign: 'center',
+  textAlignVertical: 'center',
+};
+
 export function SolarSystemGeneratedScene() {
   const plan = useHomeworkStore((s) => s.xrScenePlan);
+  const scan = useHomeworkStore((s) => s.activeHomeworkScan);
   const assets = useHomeworkStore((s) => s.xrAssetsByEntityId);
   const errors = useHomeworkStore((s) => s.xrAssetErrorByEntityId);
   const selectedId = useHomeworkStore((s) => s.selectedEntityId);
   const setSelected = useHomeworkStore((s) => s.setSelectedEntity);
   const setAssetLoadError = useHomeworkStore((s) => s.setAssetLoadError);
 
+  const referenceImageUri = scan?.referenceImageUri;
   const entities = plan?.entities ?? [];
   registerEntityMaterials(entities);
 
@@ -77,6 +91,23 @@ export function SolarSystemGeneratedScene() {
           onLoadError={setAssetLoadError}
         />
       ))}
+      {referenceImageUri ? (
+        <>
+          <ViroImage
+            source={{ uri: referenceImageUri }}
+            position={[1.4, 0.5, -2]}
+            style={refImageStyle}
+            resizeMode="ScaleToFit"
+          />
+          <ViroText
+            text="From your homework"
+            position={[1.4, 0.12, -2]}
+            scale={[0.2, 0.2, 0.2]}
+            style={refLabelStyle}
+          />
+        </>
+      ) : null}
+
       <ViroHomeworkTutorPanel text={tutorText} />
     </ViroARScene>
   );

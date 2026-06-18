@@ -30,7 +30,7 @@ import { OCR_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
 import { homeworkParseSchema, type HomeworkParseResult } from '@/features/homework/schemas';
 import { parseHomeworkText } from '@/features/homework/parseHomeworkText';
-import { enhanceForOcr, preprocessHomeworkImage } from './imagePrep';
+import { cropDiagram, enhanceForOcr, preprocessHomeworkImage } from './imagePrep';
 import { useHomeworkStore } from '@/features/homework/homeworkStore';
 import { buildXRScenePlan } from '@/features/tutor/tutorPrompts';
 import type { HomeworkQuestion, HomeworkScan, Subject } from '@/features/homework/types';
@@ -46,6 +46,7 @@ const SAMPLE_PARSE: HomeworkParseResult = {
     { prompt: 'Name the inner rocky planets and explain how they differ from the outer gas giants.' },
     { prompt: 'List the planets in order from the Sun.' },
   ],
+  diagramBox: null,
 };
 
 /** Cloud fallback when on-device OCR can't read enough text. */
@@ -78,11 +79,16 @@ export default function HomeworkScannerScreen() {
   const setError = useScannerStore((s) => s.setError);
 
   const finishScan = useCallback(
-    (imageUri: string, parse: HomeworkParseResult) => {
+    (
+      imageUri: string,
+      parse: HomeworkParseResult,
+      opts?: { referenceImageUri?: string; rodinReferenceImageUri?: string },
+    ) => {
       const store = useHomeworkStore.getState();
       const scan: HomeworkScan = {
         id: rid(),
         imageUri,
+        referenceImageUri: opts?.referenceImageUri,
         createdAt: new Date().toISOString(),
         subject: parse.subject as Subject,
         topic: parse.topic,
@@ -96,6 +102,10 @@ export default function HomeworkScannerScreen() {
 
       store.setHomeworkScan(scan, questions);
       const plan = buildXRScenePlan(scan, questions, parse);
+      // Drive Rodin image-to-3D from the homework diagram crop when we have one.
+      if (opts?.rodinReferenceImageUri && plan.rodinGenerationPlan) {
+        plan.rodinGenerationPlan.referenceImageUri = opts.rodinReferenceImageUri;
+      }
       store.setXRScenePlan(plan);
       if (plan.shouldOfferXR) {
         store.addTutorMessage({ id: rid(), role: 'assistant', content: plan.offerMessage });
@@ -113,9 +123,13 @@ export default function HomeworkScannerScreen() {
       const file = await photo.capturePhotoToFile({}, {});
       const rawUri = file.filePath.startsWith('file://') ? file.filePath : `file://${file.filePath}`;
       // 1) downscale + compress (preview + light input), 2) grayscale+contrast for OCR.
-      const processedUri = await preprocessHomeworkImage(rawUri).catch(() => rawUri);
-      const enhancedBase64 = await enhanceForOcr(processedUri).catch(() => null);
-      const ocrInput = enhancedBase64 ?? processedUri;
+      const processed = await preprocessHomeworkImage(rawUri).catch(() => ({
+        uri: rawUri,
+        width: 0,
+        height: 0,
+      }));
+      const enhancedBase64 = await enhanceForOcr(processed.uri).catch(() => null);
+      const ocrInput = enhancedBase64 ?? processed.uri;
 
       let parse: HomeworkParseResult | undefined;
       // Primary: on-device OCR extraction.
@@ -130,12 +144,21 @@ export default function HomeworkScannerScreen() {
       if (!parse) {
         const base64 =
           enhancedBase64 ??
-          (await FileSystem.readAsStringAsync(processedUri, {
+          (await FileSystem.readAsStringAsync(processed.uri, {
             encoding: FileSystem.EncodingType.Base64,
           }));
         parse = await parseHomeworkImage(base64);
       }
-      finishScan(processedUri, parse);
+
+      // If the homework has an illustration (e.g. a solar-system picture), crop it
+      // so it can be shown in XR and used for Rodin image-to-3D.
+      const cropUri = parse.diagramBox
+        ? await cropDiagram(processed, parse.diagramBox).catch(() => null)
+        : null;
+      finishScan(processed.uri, parse, {
+        referenceImageUri: cropUri ?? processed.uri,
+        rodinReferenceImageUri: cropUri ?? undefined,
+      });
     } catch {
       setError('Could not read or parse the homework. Try again, or load the sample.');
     }

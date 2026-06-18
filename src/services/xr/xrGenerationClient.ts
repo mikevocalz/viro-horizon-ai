@@ -4,6 +4,7 @@
  * scene only reads store state, never this client.
  */
 import { fetch as expoFetch } from 'expo/fetch';
+import * as FileSystem from 'expo-file-system/legacy';
 
 import { generateApiUrl } from '@/lib/api';
 import { haptics } from '@/lib/haptics';
@@ -23,10 +24,17 @@ const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 export async function runXRGeneration(plan: RodinGenerationPlan): Promise<void> {
   const store = useHomeworkStore.getState();
   try {
+    // Image-to-3D when a homework diagram crop is available.
+    let referenceImageBase64: string | undefined;
+    if (plan.referenceImageUri) {
+      referenceImageBase64 = await FileSystem.readAsStringAsync(plan.referenceImageUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      }).catch(() => undefined);
+    }
     const startRes = await expoFetch(generateApiUrl('/api/xr/rodin/start'), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, referenceImageBase64 }),
     });
     if (!startRes.ok) {
       throw new Error(`start failed (${startRes.status})`);

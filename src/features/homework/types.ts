@@ -31,6 +31,11 @@ export interface HomeworkScan {
   id: string;
   /** Local URI of the captured (cleaned/compressed) homework image. */
   imageUri: string;
+  /**
+   * The illustration to show in XR — the cropped diagram when one was detected,
+   * otherwise the whole page. Empty for the offline sample.
+   */
+  referenceImageUri?: string;
   createdAt: string;
   subject: Subject;
   topic: string;
@@ -139,6 +144,12 @@ export interface RodinGenerationPlan {
   status: RodinStatus;
   prompt: string;
   negativePrompt?: string;
+  /**
+   * Local URI of the homework diagram crop. When set, generation uses Rodin
+   * image-to-3D so the model matches the child's homework picture; otherwise
+   * text-to-3D from `prompt`.
+   */
+  referenceImageUri?: string;
   assetTargets: RodinAssetTarget[];
   quality: RodinQuality;
   mobileBudget: RodinMobileBudget;

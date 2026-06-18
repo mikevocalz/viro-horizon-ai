@@ -65,5 +65,8 @@ export function parseHomeworkText(text: string): HomeworkParseResult {
     topic,
     keywords: keywords.length > 0 ? keywords : mathHits,
     questions: extractQuestions(text),
+    // On-device OCR has no diagram localization; the whole page is used as the
+    // XR reference instead (see the scanner).
+    diagramBox: null,
   };
 }
