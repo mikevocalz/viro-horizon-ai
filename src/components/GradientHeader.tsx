@@ -6,8 +6,7 @@
  * `onLayout` so the canvas stays correct across orientation changes
  * (orientation is "default").
  */
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { useNavigation } from 'expo-router';
 import { DrawerActions } from '@react-navigation/native';
@@ -33,7 +32,7 @@ export function GradientHeader({
   showMenu = true,
 }: Props) {
   const navigation = useNavigation();
-  const [width, setWidth] = useState(0);
+  const { width } = useWindowDimensions();
   const stops = Gradients[gradient];
 
   const openDrawer = () => {
@@ -42,21 +41,16 @@ export function GradientHeader({
   };
 
   return (
-    <View
-      style={[styles.container, { height }]}
-      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-    >
-      {width > 0 ? (
-        <Canvas style={StyleSheet.absoluteFill}>
-          <Rect x={0} y={0} width={width} height={height}>
-            <LinearGradient
-              start={vec(0, 0)}
-              end={vec(width, height)}
-              colors={[...stops]}
-            />
-          </Rect>
-        </Canvas>
-      ) : null}
+    <View style={[styles.container, { height }]}>
+      <Canvas style={StyleSheet.absoluteFill}>
+        <Rect x={0} y={0} width={width} height={height}>
+          <LinearGradient
+            start={vec(0, 0)}
+            end={vec(width, height)}
+            colors={[...stops]}
+          />
+        </Rect>
+      </Canvas>
       {showMenu ? (
         <Pressable
           onPress={openDrawer}

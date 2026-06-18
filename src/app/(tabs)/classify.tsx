@@ -4,7 +4,7 @@
  * Pick an image from the library; `forward()` runs the model locally and
  * returns a label→confidence map, which we sort into a top-5 leaderboard.
  */
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -23,8 +23,7 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { CLASSIFICATION_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
-
-type Prediction = { label: string; score: number };
+import { useClassifyStore } from '@/state/classifyStore';
 
 function prettify(label: string): string {
   return label
@@ -35,8 +34,10 @@ function prettify(label: string): string {
 
 export default function ClassifyScreen() {
   const classifier = useClassification({ model: CLASSIFICATION_MODEL });
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const imageUri = useClassifyStore((s) => s.imageUri);
+  const predictions = useClassifyStore((s) => s.predictions);
+  const setImage = useClassifyStore((s) => s.setImage);
+  const setPredictions = useClassifyStore((s) => s.setPredictions);
 
   const pickAndClassify = useCallback(async () => {
     if (!classifier.isReady || classifier.isGenerating) {
@@ -50,8 +51,7 @@ export default function ClassifyScreen() {
       return;
     }
     const uri = result.assets[0].uri;
-    setImageUri(uri);
-    setPredictions([]);
+    setImage(uri);
     try {
       const scores = await classifier.forward(uri);
       const ranked = Object.entries(scores)
@@ -63,7 +63,7 @@ export default function ClassifyScreen() {
     } catch {
       haptics.error();
     }
-  }, [classifier]);
+  }, [classifier, setImage, setPredictions]);
 
   return (
     <ScreenContainer>

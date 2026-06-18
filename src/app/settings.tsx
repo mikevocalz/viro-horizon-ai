@@ -1,32 +1,27 @@
 /**
  * Settings — wires real Pulsar haptics/sound toggles and surfaces app metadata.
  */
-import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Constants from 'expo-constants';
-import { Settings as PulsarSettings } from 'react-native-pulsar';
 import { Volume2, Vibrate, Waves } from 'lucide-react-native';
 
 import { GradientHeader } from '@/components/GradientHeader';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
+import { useSettingsStore } from '@/state/settingsStore';
 
 export default function SettingsScreen() {
-  const [hapticsOn, setHapticsOn] = useState(true);
-  const [soundOn, setSoundOn] = useState(false);
+  const hapticsOn = useSettingsStore((s) => s.hapticsEnabled);
+  const soundOn = useSettingsStore((s) => s.soundEnabled);
+  const setHapticsEnabled = useSettingsStore((s) => s.setHapticsEnabled);
+  const setSoundEnabled = useSettingsStore((s) => s.setSoundEnabled);
 
   const toggleHaptics = (next: boolean) => {
-    setHapticsOn(next);
-    PulsarSettings.enableHaptics(next);
+    setHapticsEnabled(next);
     if (next) {
       haptics.selection();
     }
-  };
-
-  const toggleSound = (next: boolean) => {
-    setSoundOn(next);
-    PulsarSettings.enableSound(next);
   };
 
   return (
@@ -54,7 +49,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={soundOn}
-              onValueChange={toggleSound}
+              onValueChange={setSoundEnabled}
               trackColor={{ true: Colors.accent, false: Colors.border }}
               thumbColor={Colors.text}
             />

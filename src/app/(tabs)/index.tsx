@@ -5,7 +5,7 @@
  * the download progress. Generation streams token-by-token into `response`,
  * which we render as a live assistant bubble until it lands in `messageHistory`.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -25,6 +25,7 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { CHAT_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
+import { useChatStore } from '@/state/chatStore';
 
 const SYSTEM_PROMPT =
   'You are a helpful, concise assistant running fully on-device. Keep answers short unless asked to elaborate.';
@@ -47,7 +48,9 @@ function Bubble({ role, content }: { role: string; content: string }) {
 
 export default function ChatScreen() {
   const llm = useLLM({ model: CHAT_MODEL });
-  const [input, setInput] = useState('');
+  const input = useChatStore((s) => s.input);
+  const setInput = useChatStore((s) => s.setInput);
+  const clearInput = useChatStore((s) => s.clearInput);
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -63,7 +66,7 @@ export default function ChatScreen() {
     if (!text || !llm.isReady || llm.isGenerating) {
       return;
     }
-    setInput('');
+    clearInput();
     haptics.send();
     try {
       await llm.sendMessage(text);
@@ -71,7 +74,7 @@ export default function ChatScreen() {
     } catch {
       haptics.error();
     }
-  }, [input, llm]);
+  }, [input, llm, clearInput]);
 
   const conversation = llm.messageHistory.filter((m) => m.role !== 'system');
   const canSend = llm.isReady && !llm.isGenerating && input.trim().length > 0;

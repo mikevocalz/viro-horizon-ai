@@ -2,7 +2,7 @@
  * Models — overview of the on-device AI models the app uses, plus local
  * storage management via the ExecuTorch Expo resource fetcher.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ExpoResourceFetcher } from 'react-native-executorch-expo-resource-fetcher';
 import { Boxes, Cpu, Image as ImageIcon, Trash2 } from 'lucide-react-native';
@@ -12,6 +12,7 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { CHAT_MODEL, CLASSIFICATION_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
+import { useModelsStore } from '@/state/modelsStore';
 
 type ModelCard = {
   key: string;
@@ -46,8 +47,10 @@ const MANAGED_SOURCES = [
 ];
 
 export default function ModelsScreen() {
-  const [fileCount, setFileCount] = useState<number | null>(null);
-  const [busy, setBusy] = useState(false);
+  const fileCount = useModelsStore((s) => s.fileCount);
+  const busy = useModelsStore((s) => s.busy);
+  const setFileCount = useModelsStore((s) => s.setFileCount);
+  const setBusy = useModelsStore((s) => s.setBusy);
 
   const refresh = useCallback(async () => {
     try {
@@ -56,7 +59,7 @@ export default function ModelsScreen() {
     } catch {
       setFileCount(null);
     }
-  }, []);
+  }, [setFileCount]);
 
   useEffect(() => {
     void refresh();
@@ -73,7 +76,7 @@ export default function ModelsScreen() {
       setBusy(false);
       void refresh();
     }
-  }, [refresh]);
+  }, [refresh, setBusy]);
 
   return (
     <ScreenContainer>
