@@ -13,6 +13,11 @@ Guidance for Claude Code when working in this repository.
 - **Brand gradients.** Use the gradients in `src/constants/theme.ts` (`brand`,
   `dusk`, `ember`) rendered via the Skia `GradientHeader`. Don't hardcode new
   gradient color stops in screens — add a named entry to `Gradients` instead.
+- **Styling = NativeWind.** Main-thread screens use `className` (NativeWind v5 /
+  Tailwind v4). Brand colors live in `@theme` in `src/global.css`, mirroring
+  `theme.ts`. Keep on `StyleSheet`/constants: the secondary-runtime list
+  components (`src/components/runtime/`), Skia gradient stops, navigation
+  `screenOptions`, and Lucide icon `color` props.
 
 ## Verify before pinning
 

@@ -74,6 +74,27 @@ API route at `src/app/api/chat+api.ts`, which calls `streamText()` against
 Streaming on native needs `expo/fetch` plus polyfills (`@ungap/structured-clone`,
 `@stardazed/streams-text-encoding`), loaded once in `src/lib/polyfills.ts`.
 
+## Styling (NativeWind v5 / Tailwind v4)
+
+Main-thread screens are styled with NativeWind v5 (`className`); `src/global.css`
+imports Tailwind v4 + `nativewind/theme` and defines the brand palette via
+`@theme` (mirroring `src/constants/theme.ts`), so utilities like `bg-background`,
+`text-muted`, `bg-accent`, `border-border` match the Skia gradients and nav chrome.
+
+- `metro.config.js` composes `withNativewind(withThreadedRuntime(getDefaultConfig))`.
+  NativeWind sets Metro's top-level `transformerPath` (delegating to Expo's worker)
+  and enables `globalClassNamePolyfill`, so `className` works on stock
+  `react-native` imports with no `babel.config.js`. We restore Expo's
+  `babelTransformerPath` after the runtimes wrap.
+- `postcss.config.mjs` uses `@tailwindcss/postcss`; types come from
+  `nativewind-env.d.ts`.
+- Kept on `StyleSheet`: the two secondary-runtime list components (NativeWind's
+  CSS runtime isn't initialized in a secondary Hermes instance), the Skia gradient
+  stops, navigation `screenOptions` colors, and Lucide icon `color` props.
+
+> NativeWind v5 is `5.0.0-preview` (Tailwind v4 + `react-native-css@3`); validate
+> styling in a native build (`expo run:*`).
+
 ## Threaded rendering (react-native-runtimes)
 
 The heavy list rendering for **Chat** and **Classify** runs on secondary JS

@@ -18,7 +18,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -32,7 +31,7 @@ import { Send, Square } from 'lucide-react-native';
 import { GradientHeader } from '@/components/GradientHeader';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { ChatMessagesSurface } from '@/components/runtime/ChatMessagesSurface';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { CHAT_MODEL, executorchAvailable } from '@/lib/executorch';
 import { generateApiUrl } from '@/lib/api';
 import { haptics } from '@/lib/haptics';
@@ -152,32 +151,40 @@ export default function ChatScreen() {
         height={150}
       />
 
-      <View style={styles.engineRow}>
+      <View className="flex-row gap-2 px-4 pt-3">
         <Pressable
-          style={[styles.enginePill, !isOnline && styles.enginePillActive]}
+          className={`rounded-full border bg-surface px-3 py-1 ${
+            !isOnline ? 'border-accent bg-surface-elevated' : 'border-border'
+          }`}
           onPress={() => {
             haptics.selection();
             setEngine('device');
           }}
           disabled={!executorchAvailable}
         >
-          <Text style={[styles.engineText, !isOnline && styles.engineTextActive]}>On-device</Text>
+          <Text className={`text-[13px] font-semibold ${!isOnline ? 'text-text' : 'text-muted'}`}>
+            On-device
+          </Text>
         </Pressable>
         <Pressable
-          style={[styles.enginePill, isOnline && styles.enginePillActive]}
+          className={`rounded-full border bg-surface px-3 py-1 ${
+            isOnline ? 'border-accent bg-surface-elevated' : 'border-border'
+          }`}
           onPress={() => {
             haptics.selection();
             setEngine('online');
           }}
         >
-          <Text style={[styles.engineText, isOnline && styles.engineTextActive]}>Online</Text>
+          <Text className={`text-[13px] font-semibold ${isOnline ? 'text-text' : 'text-muted'}`}>
+            Online
+          </Text>
         </Pressable>
       </View>
 
       {deviceLoading ? (
-        <View style={styles.loader}>
+        <View className="flex-1 items-center justify-center gap-3 p-6">
           <ActivityIndicator color={Colors.accent} />
-          <Text style={styles.loaderText}>
+          <Text className="text-center text-muted">
             {errorMessage
               ? `Failed to load model: ${errorMessage}`
               : `Downloading model… ${Math.round(llm.downloadProgress * 100)}%`}
@@ -185,17 +192,17 @@ export default function ChatScreen() {
         </View>
       ) : (
         <KeyboardAvoidingView
-          style={styles.flex}
+          className="flex-1"
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
         >
-          <View style={styles.flex}>
+          <View className="flex-1">
             <ChatMessagesSurface />
           </View>
 
-          <View style={styles.composer}>
+          <View className="flex-row items-end gap-2 border-t border-border bg-surface p-3">
             <TextInput
-              style={styles.input}
+              className="max-h-[120px] flex-1 rounded-[18px] bg-surface-elevated px-3 py-2 text-[15px] text-text"
               value={input}
               onChangeText={setInput}
               placeholder="Message"
@@ -205,7 +212,7 @@ export default function ChatScreen() {
             />
             {isBusy ? (
               <Pressable
-                style={[styles.sendButton, styles.stopButton]}
+                className="h-11 w-11 items-center justify-center rounded-full bg-danger"
                 onPress={stop}
                 accessibilityLabel="Stop generating"
               >
@@ -213,7 +220,9 @@ export default function ChatScreen() {
               </Pressable>
             ) : (
               <Pressable
-                style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
+                className={`h-11 w-11 items-center justify-center rounded-full bg-accent ${
+                  !canSend ? 'opacity-40' : ''
+                }`}
                 onPress={onSend}
                 disabled={!canSend}
                 accessibilityLabel="Send message"
@@ -227,61 +236,3 @@ export default function ChatScreen() {
     </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  engineRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-  },
-  enginePill: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  enginePillActive: { backgroundColor: Colors.surfaceElevated, borderColor: Colors.accent },
-  engineText: { color: Colors.textMuted, fontWeight: '600', fontSize: 13 },
-  engineTextActive: { color: Colors.text },
-  loader: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.md,
-    padding: Spacing.xl,
-  },
-  loaderText: { color: Colors.textMuted, textAlign: 'center' },
-  composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  input: {
-    flex: 1,
-    maxHeight: 120,
-    color: Colors.text,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontSize: 15,
-  },
-  sendButton: {
-    height: 44,
-    width: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.accent,
-  },
-  sendButtonDisabled: { opacity: 0.4 },
-  stopButton: { backgroundColor: Colors.danger },
-});

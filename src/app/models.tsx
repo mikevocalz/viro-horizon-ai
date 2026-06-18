@@ -3,13 +3,13 @@
  * storage management via the ExecuTorch Expo resource fetcher.
  */
 import { useCallback, useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { ExpoResourceFetcher } from 'react-native-executorch-expo-resource-fetcher';
 import { Boxes, Cpu, Image as ImageIcon, Trash2 } from 'lucide-react-native';
 
 import { GradientHeader } from '@/components/GradientHeader';
 import { ScreenContainer } from '@/components/ScreenContainer';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { CHAT_MODEL, CLASSIFICATION_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
 import { useModelsStore } from '@/state/modelsStore';
@@ -85,93 +85,52 @@ export default function ModelsScreen() {
         subtitle="On-device · downloaded on first use"
         gradient="brand"
       />
-      <ScrollView contentContainerStyle={styles.content}>
-        {MODELS.map((m) => {
-          const Icon = m.icon;
-          return (
-            <View key={m.key} style={styles.card}>
-              <View style={styles.iconWrap}>
-                <Icon color={Colors.accent} size={22} />
+      <ScrollView>
+        <View className="gap-3 p-4">
+          {MODELS.map((m) => {
+            const Icon = m.icon;
+            return (
+              <View
+                key={m.key}
+                className="flex-row gap-3 rounded-[18px] border border-border bg-surface p-4"
+              >
+                <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-elevated">
+                  <Icon color={Colors.accent} size={22} />
+                </View>
+                <View className="flex-1 gap-0.5">
+                  <Text className="text-base font-bold text-text">{m.name}</Text>
+                  <Text className="text-[13px] font-semibold text-accent-alt">{m.task}</Text>
+                  <Text className="mt-0.5 text-[13px] text-muted">{m.detail}</Text>
+                </View>
               </View>
-              <View style={styles.cardBody}>
-                <Text style={styles.cardName}>{m.name}</Text>
-                <Text style={styles.cardTask}>{m.task}</Text>
-                <Text style={styles.cardDetail}>{m.detail}</Text>
-              </View>
-            </View>
-          );
-        })}
+            );
+          })}
 
-        <View style={styles.storageCard}>
-          <View style={styles.storageHeader}>
-            <Boxes color={Colors.textMuted} size={20} />
-            <Text style={styles.storageTitle}>Local storage</Text>
-          </View>
-          <Text style={styles.storageText}>
-            {fileCount === null
-              ? 'Downloaded files: unavailable'
-              : `Downloaded files: ${fileCount}`}
-          </Text>
-          <Pressable
-            style={[styles.clearButton, busy && styles.disabled]}
-            onPress={clear}
-            disabled={busy}
-          >
-            <Trash2 color={Colors.danger} size={18} />
-            <Text style={styles.clearText}>
-              {busy ? 'Clearing…' : 'Clear downloaded models'}
+          <View className="gap-2 rounded-[18px] border border-border bg-surface p-4">
+            <View className="flex-row items-center gap-2">
+              <Boxes color={Colors.textMuted} size={20} />
+              <Text className="text-[15px] font-bold text-text">Local storage</Text>
+            </View>
+            <Text className="text-muted">
+              {fileCount === null
+                ? 'Downloaded files: unavailable'
+                : `Downloaded files: ${fileCount}`}
             </Text>
-          </Pressable>
+            <Pressable
+              className={`flex-row items-center gap-2 self-start rounded-xl bg-surface-elevated px-3 py-3 ${
+                busy ? 'opacity-50' : ''
+              }`}
+              onPress={clear}
+              disabled={busy}
+            >
+              <Trash2 color={Colors.danger} size={18} />
+              <Text className="font-semibold text-danger">
+                {busy ? 'Clearing…' : 'Clear downloaded models'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { padding: Spacing.lg, gap: Spacing.md },
-  card: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  iconWrap: {
-    height: 44,
-    width: 44,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceElevated,
-  },
-  cardBody: { flex: 1, gap: 2 },
-  cardName: { color: Colors.text, fontSize: 16, fontWeight: '700' },
-  cardTask: { color: Colors.accentAlt, fontSize: 13, fontWeight: '600' },
-  cardDetail: { color: Colors.textMuted, fontSize: 13, marginTop: 2 },
-  storageCard: {
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: Spacing.sm,
-  },
-  storageHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  storageTitle: { color: Colors.text, fontWeight: '700', fontSize: 15 },
-  storageText: { color: Colors.textMuted },
-  clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.surfaceElevated,
-    alignSelf: 'flex-start',
-  },
-  clearText: { color: Colors.danger, fontWeight: '600' },
-  disabled: { opacity: 0.5 },
-});

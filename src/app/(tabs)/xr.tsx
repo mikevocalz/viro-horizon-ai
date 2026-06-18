@@ -9,7 +9,7 @@
  * the native Viro module.
  */
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import {
   ViroARScene,
   ViroARSceneNavigator,
@@ -23,7 +23,6 @@ import {
 
 import { GradientHeader } from '@/components/GradientHeader';
 import { ScreenContainer } from '@/components/ScreenContainer';
-import { Colors, Spacing } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { isHorizonDevice } from '@/lib/horizon';
 
@@ -84,16 +83,16 @@ export default function XrScreen() {
         gradient="ember"
         height={120}
       />
-      <View style={styles.flex}>
+      <View className="flex-1">
         <ViroARSceneNavigator
           initialScene={{ scene: XrScene }}
-          style={styles.flex}
+          style={{ flex: 1 }}
           questFallback={
-            <View style={styles.notice}>
-              <Text style={styles.noticeTitle}>Horizon device detected</Text>
-              <Text style={styles.noticeText}>
-                AR passthrough is unavailable on Quest. Build a VR target to
-                render this scene immersively.
+            <View className="flex-1 items-center justify-center gap-2 bg-background p-6">
+              <Text className="text-lg font-bold text-text">Horizon device detected</Text>
+              <Text className="text-center text-muted">
+                AR passthrough is unavailable on Quest. Build a VR target to render this scene
+                immersively.
               </Text>
             </View>
           }
@@ -102,17 +101,3 @@ export default function XrScreen() {
     </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  notice: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    padding: Spacing.xl,
-    backgroundColor: Colors.background,
-  },
-  noticeTitle: { color: Colors.text, fontSize: 18, fontWeight: '700' },
-  noticeText: { color: Colors.textMuted, textAlign: 'center' },
-});

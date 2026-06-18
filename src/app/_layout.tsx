@@ -8,6 +8,7 @@
  *    3-tab Studio group, followed by Models / Profile / Settings.
  */
 import '@/lib/polyfills';
+import '@/global.css';
 
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
