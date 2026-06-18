@@ -1,0 +1,24 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+@source "./**/*.{ts,tsx}";
+
+/* Brand palette — mirrors src/constants/theme.ts so utilities like
+   `bg-background`, `text-muted`, `bg-accent`, `border-border` map to the
+   same colors used by the Skia gradients and navigation chrome. */
+@theme {
+  --color-background: #0b0f1a;
+  --color-surface: #141a2a;
+  --color-surface-elevated: #1c2438;
+  --color-border: #26304a;
+  --color-text: #f2f5ff;
+  --color-muted: #9aa6c2;
+  --color-accent: #6c8bff;
+  --color-accent-alt: #36e0c8;
+  --color-danger: #ff6b6b;
+  --color-success: #3fcf8e;
+  --color-warning: #f5b14c;
+}

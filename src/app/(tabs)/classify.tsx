@@ -7,7 +7,7 @@
  * a secondary runtime so building them never blocks the picker/preview.
  */
 import { useCallback } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useClassification } from 'react-native-executorch';
@@ -16,7 +16,7 @@ import { ImagePlus } from 'lucide-react-native';
 import { GradientHeader } from '@/components/GradientHeader';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { ClassifyResultsSurface } from '@/components/runtime/ClassifyResultsSurface';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { CLASSIFICATION_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
 import { useClassifyStore } from '@/state/classifyStore';
@@ -71,38 +71,41 @@ export default function ClassifyScreen() {
       />
 
       {!classifier.isReady ? (
-        <View style={styles.loader}>
+        <View className="flex-1 items-center justify-center gap-3 p-6">
           <ActivityIndicator color={Colors.accent} />
-          <Text style={styles.loaderText}>
+          <Text className="text-center text-muted">
             {classifier.error
               ? `Failed to load model: ${classifier.error.message}`
               : `Downloading model… ${Math.round(classifier.downloadProgress * 100)}%`}
           </Text>
         </View>
       ) : (
-        <View style={styles.body}>
+        <View className="flex-1 gap-4 p-4">
           <Pressable
-            style={styles.preview}
+            className="h-[260px] overflow-hidden rounded-[18px] border border-border bg-surface"
             onPress={pickAndClassify}
             disabled={classifier.isGenerating}
           >
             {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.image} contentFit="cover" />
+              <Image source={{ uri: imageUri }} style={{ flex: 1 }} contentFit="cover" />
             ) : (
-              <View style={styles.placeholder}>
+              <View className="flex-1 items-center justify-center gap-2">
                 <ImagePlus color={Colors.textMuted} size={40} />
-                <Text style={styles.placeholderText}>Tap to pick an image</Text>
+                <Text className="text-muted">Tap to pick an image</Text>
               </View>
             )}
           </Pressable>
 
-          <View style={styles.results}>
+          <View className="flex-1">
             <ClassifyResultsSurface />
           </View>
 
           {imageUri ? (
-            <Pressable style={styles.button} onPress={pickAndClassify}>
-              <Text style={styles.buttonText}>Pick another image</Text>
+            <Pressable
+              className="items-center rounded-xl bg-surface-elevated py-3"
+              onPress={pickAndClassify}
+            >
+              <Text className="font-semibold text-text">Pick another image</Text>
             </Pressable>
           ) : null}
         </View>
@@ -110,28 +113,3 @@ export default function ClassifyScreen() {
     </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  body: { flex: 1, padding: Spacing.lg, gap: Spacing.lg },
-  loader: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, padding: Spacing.xl },
-  loaderText: { color: Colors.textMuted, textAlign: 'center' },
-  preview: {
-    height: 260,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  image: { flex: 1 },
-  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm },
-  placeholderText: { color: Colors.textMuted },
-  results: { flex: 1 },
-  button: {
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-  },
-  buttonText: { color: Colors.text, fontWeight: '600' },
-});
