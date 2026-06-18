@@ -155,6 +155,19 @@ export default function TutorScreen() {
       <View className="flex-row gap-2 px-4 pt-3">
         <Pressable
           className={`rounded-full border bg-surface px-3 py-1 ${
+            isOnline ? 'border-accent bg-surface-elevated' : 'border-border'
+          }`}
+          onPress={() => {
+            haptics.selection();
+            setEngine('online');
+          }}
+        >
+          <Text className={`text-[13px] font-semibold ${isOnline ? 'text-text' : 'text-muted'}`}>
+            Gemini
+          </Text>
+        </Pressable>
+        <Pressable
+          className={`rounded-full border bg-surface px-3 py-1 ${
             !isOnline ? 'border-accent bg-surface-elevated' : 'border-border'
           }`}
           onPress={() => {
@@ -165,19 +178,6 @@ export default function TutorScreen() {
         >
           <Text className={`text-[13px] font-semibold ${!isOnline ? 'text-text' : 'text-muted'}`}>
             On-device
-          </Text>
-        </Pressable>
-        <Pressable
-          className={`rounded-full border bg-surface px-3 py-1 ${
-            isOnline ? 'border-accent bg-surface-elevated' : 'border-border'
-          }`}
-          onPress={() => {
-            haptics.selection();
-            setEngine('online');
-          }}
-        >
-          <Text className={`text-[13px] font-semibold ${isOnline ? 'text-text' : 'text-muted'}`}>
-            Online
           </Text>
         </Pressable>
       </View>

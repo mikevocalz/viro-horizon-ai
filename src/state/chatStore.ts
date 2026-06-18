@@ -1,14 +1,12 @@
 /**
- * Chat screen UI state.
+ * Tutor screen UI state.
  *
- * Conversation/model state lives in the engine hooks (`useLLM` for on-device,
- * `useChat` for online). This store holds the draft composer text and the
- * selected engine. The engine defaults to on-device when the ExecuTorch runtime
- * is available, otherwise it falls back to the online (Google) engine.
+ * Conversation/model state lives in the engine hooks (`useChat` for online,
+ * `useLLM` for on-device). This store holds the draft composer text and the
+ * selected engine. Gemini (online) is the primary engine; on-device ExecuTorch
+ * is the secondary option, selectable via the toggle.
  */
 import { create } from 'zustand';
-
-import { executorchAvailable } from '@/lib/executorch';
 
 export type ChatEngine = 'device' | 'online';
 
@@ -22,7 +20,8 @@ type ChatStore = {
 
 export const useChatStore = create<ChatStore>((set) => ({
   input: '',
-  engine: executorchAvailable ? 'device' : 'online',
+  // Gemini-first: default to the online engine; on-device is secondary.
+  engine: 'online',
   setInput: (value) => set({ input: value }),
   clearInput: () => set({ input: '' }),
   setEngine: (engine) => set({ engine }),

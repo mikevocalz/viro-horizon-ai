@@ -78,13 +78,15 @@ Streaming on native needs `expo/fetch` plus polyfills (`@ungap/structured-clone`
 
 The Studio tabs are **Tutor · Scan · Classify · XR**:
 
-1. **Scan** (`react-native-vision-camera`) captures a homework photo → `/api/homework/parse`
-   (Gemini) extracts subject/topic/keywords/questions. Offline? "Load sample" seeds a
+1. **Scan** (`react-native-vision-camera`) captures a homework photo, then **on-device OCR**
+   (ExecuTorch CRAFT, `useOCR`) extracts the text locally and `parseHomeworkText` derives
+   subject/topic/keywords/questions — no network. If OCR yields too little text it falls
+   back to the Gemini vision parse route (`/api/homework/parse`). "Load sample" seeds a
    solar-system scan so the whole flow is demoable without camera/keys.
 2. A deterministic planner (`buildXRScenePlan`) produces an `XRScenePlan` + a
    `RodinGenerationPlan`. For solar-system topics it sets `shouldOfferXR`.
-3. **Tutor** (the converted chat — on-device + Gemini fallback, tutor system prompt)
-   shows a **Study in XR** CTA card.
+3. **Tutor** (the converted chat — **Gemini primary**, on-device ExecuTorch secondary via
+   the toggle; tutor system prompt) shows a **Study in XR** CTA card.
 4. Tapping it routes to **XR**, which opens `SolarSystemGeneratedScene` *instantly* with
    procedural sphere placeholders, lights, spin, labels, and a floating tutor panel —
    while `runXRGeneration` drives a Rodin job (`/api/xr/rodin/*`).

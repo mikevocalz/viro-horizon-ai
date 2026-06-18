@@ -1,15 +1,16 @@
 /**
- * Homework scanner — captures a photo with React Native Vision Camera, sends it
- * to the tutor LLM to parse (subject/topic/keywords/questions), builds the XR
- * scene plan, seeds the tutor with an offer message, then routes to the Tutor.
+ * Homework scanner — captures a photo with React Native Vision Camera, then
+ * extracts the text **on-device** with ExecuTorch OCR (CRAFT). The extracted text
+ * is parsed locally into subject/topic/keywords/questions; if OCR yields too
+ * little text, it falls back to the Gemini vision parse route.
  *
- * Works offline via "Load sample" (solar-system) so the full flow is demoable
- * without camera or API keys.
+ * "Load sample" (solar-system) keeps the full flow demoable without camera/keys.
  */
 import { useCallback, useRef } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { fetch as expoFetch } from 'expo/fetch';
 import * as FileSystem from 'expo-file-system/legacy';
+import { useOCR } from 'react-native-executorch';
 import {
   Camera,
   useCameraDevice,
@@ -25,8 +26,10 @@ import { GradientHeader } from '@/components/GradientHeader';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { Colors } from '@/constants/theme';
 import { generateApiUrl } from '@/lib/api';
+import { OCR_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
 import { homeworkParseSchema, type HomeworkParseResult } from '@/features/homework/schemas';
+import { parseHomeworkText } from '@/features/homework/parseHomeworkText';
 import { useHomeworkStore } from '@/features/homework/homeworkStore';
 import { buildXRScenePlan } from '@/features/tutor/tutorPrompts';
 import type { HomeworkQuestion, HomeworkScan, Subject } from '@/features/homework/types';
@@ -44,7 +47,8 @@ const SAMPLE_PARSE: HomeworkParseResult = {
   ],
 };
 
-async function parseHomework(imageBase64: string): Promise<HomeworkParseResult> {
+/** Cloud fallback when on-device OCR can't read enough text. */
+async function parseHomeworkImage(imageBase64: string): Promise<HomeworkParseResult> {
   const res = await expoFetch(generateApiUrl('/api/homework/parse'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -53,8 +57,7 @@ async function parseHomework(imageBase64: string): Promise<HomeworkParseResult> 
   if (!res.ok) {
     throw new Error(`parse failed (${res.status})`);
   }
-  const json = await res.json();
-  return homeworkParseSchema.parse(json);
+  return homeworkParseSchema.parse(await res.json());
 }
 
 export default function HomeworkScannerScreen() {
@@ -64,6 +67,9 @@ export default function HomeworkScannerScreen() {
   const preview = usePreviewOutput();
   const photo = usePhotoOutput();
   const cameraRef = useRef<CameraRef>(null);
+
+  // On-device OCR (downloads on first use).
+  const ocr = useOCR({ model: OCR_MODEL });
 
   const status = useScannerStore((s) => s.status);
   const error = useScannerStore((s) => s.error);
@@ -105,19 +111,34 @@ export default function HomeworkScannerScreen() {
     try {
       const file = await photo.capturePhotoToFile({}, {});
       const uri = file.filePath.startsWith('file://') ? file.filePath : `file://${file.filePath}`;
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const parse = await parseHomework(base64);
+
+      let parse: HomeworkParseResult | undefined;
+      // Primary: on-device OCR extraction.
+      if (ocr.isReady) {
+        const detections = await ocr.forward(uri);
+        const text = detections.map((d) => d.text).join(' ').trim();
+        if (text.length >= 8) {
+          parse = parseHomeworkText(text);
+        }
+      }
+      // Fallback: cloud vision parse.
+      if (!parse) {
+        const base64 = await FileSystem.readAsStringAsync(uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        parse = await parseHomeworkImage(base64);
+      }
       finishScan(uri, parse);
     } catch {
-      setError('Could not read or parse the homework. Check your connection, or load the sample.');
+      setError('Could not read or parse the homework. Try again, or load the sample.');
     }
-  }, [photo, finishScan, setStatus, setError]);
+  }, [photo, ocr, finishScan, setStatus, setError]);
 
   const loadSample = useCallback(() => {
     finishScan('', SAMPLE_PARSE);
   }, [finishScan]);
+
+  const ocrPct = Math.round(ocr.downloadProgress * 100);
 
   return (
     <ScreenContainer>
@@ -153,12 +174,17 @@ export default function HomeworkScannerScreen() {
           {status === 'parsing' ? (
             <View className="absolute inset-0 items-center justify-center gap-3 bg-[#0b0f1a]/70">
               <ActivityIndicator color={Colors.accent} />
-              <Text className="text-muted">Reading your homework…</Text>
+              <Text className="text-muted">Reading your homework on-device…</Text>
             </View>
           ) : null}
         </View>
 
         {error ? <Text className="text-center text-danger">{error}</Text> : null}
+        {!ocr.isReady && !ocr.error ? (
+          <Text className="text-center text-[12px] text-muted">
+            Preparing on-device OCR… {ocrPct}% (Gemini is used until it’s ready)
+          </Text>
+        ) : null}
 
         <Pressable
           className={`flex-row items-center justify-center gap-2 rounded-xl bg-accent py-4 ${
