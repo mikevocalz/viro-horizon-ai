@@ -54,6 +54,51 @@ export async function enhanceForOcr(uri: string): Promise<string | null> {
   return surface.makeImageSnapshot().encodeToBase64(ImageFormat.JPEG, 85);
 }
 
+// Coarse grid used to locate the illustration (content minus text).
+export const CONTENT_COLS = 40;
+export const CONTENT_ROWS = 56;
+
+/**
+ * Downscales the image to a coarse grid and returns a per-cell "non-paper" score
+ * (0 = white paper, 1 = fully inked/colored). Combined with the OCR text boxes,
+ * this lets us find the picture region (content that isn't text) even inline —
+ * and tell a real illustration apart from blank margins. Null if Skia is absent.
+ */
+export async function contentGrid(uri: string): Promise<number[] | null> {
+  const data = await Skia.Data.fromURI(uri);
+  const image = Skia.Image.MakeImageFromEncoded(data);
+  if (!image) {
+    return null;
+  }
+  const iw = image.width();
+  const ih = image.height();
+  if (!iw || !ih) {
+    return null;
+  }
+  const surface = Skia.Surface.MakeOffscreen(CONTENT_COLS, CONTENT_ROWS);
+  if (!surface) {
+    return null;
+  }
+  const canvas = surface.getCanvas();
+  canvas.scale(CONTENT_COLS / iw, CONTENT_ROWS / ih);
+  canvas.drawImage(image, 0, 0);
+  const px = surface.makeImageSnapshot().readPixels();
+  if (!px) {
+    return null;
+  }
+  const isFloat = px instanceof Float32Array;
+  const cells = CONTENT_COLS * CONTENT_ROWS;
+  const grid = new Array<number>(cells);
+  for (let i = 0; i < cells; i++) {
+    const o = i * 4;
+    const r = isFloat ? px[o] : px[o] / 255;
+    const g = isFloat ? px[o + 1] : px[o + 1] / 255;
+    const b = isFloat ? px[o + 2] : px[o + 2] / 255;
+    grid[i] = 1 - Math.min(r, g, b);
+  }
+  return grid;
+}
+
 /** Crops the normalized diagram box out of an image. Returns the crop uri or null. */
 export async function cropDiagram(
   image: ProcessedImage,

@@ -30,7 +30,14 @@ import { OCR_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
 import { homeworkParseSchema, type HomeworkParseResult } from '@/features/homework/schemas';
 import { parseHomeworkText } from '@/features/homework/parseHomeworkText';
-import { cropDiagram, enhanceForOcr, preprocessHomeworkImage } from './imagePrep';
+import {
+  CONTENT_COLS,
+  CONTENT_ROWS,
+  contentGrid,
+  cropDiagram,
+  enhanceForOcr,
+  preprocessHomeworkImage,
+} from './imagePrep';
 import { detectDiagramBox } from './detectDiagram';
 import { useHomeworkStore } from '@/features/homework/homeworkStore';
 import { buildXRScenePlan } from '@/features/tutor/tutorPrompts';
@@ -139,8 +146,14 @@ export default function HomeworkScannerScreen() {
         const text = detections.map((d) => d.text).join(' ').trim();
         if (text.length >= 8) {
           parse = parseHomeworkText(text);
-          // On-device diagram localization from the OCR boxes.
-          parse.diagramBox = detectDiagramBox(detections, processed.width, processed.height);
+          // On-device diagram localization: Skia content grid minus OCR text boxes.
+          const grid = await contentGrid(processed.uri).catch(() => null);
+          parse.diagramBox = detectDiagramBox(
+            detections,
+            processed.width,
+            processed.height,
+            grid ? { values: grid, cols: CONTENT_COLS, rows: CONTENT_ROWS } : undefined,
+          );
         }
       }
       // Fallback: cloud vision parse (reuse the enhanced base64 when available).

@@ -96,8 +96,10 @@ The Studio tabs are **Tutor · Scan · Classify · XR**:
    the placeholder for `Viro3DObject` without resetting the scene; GLB load errors revert
    to the placeholder. No Horizon fallback — the scene renders on all targets.
 6. **Homework images in XR:** the illustration region is localized either by Gemini
-   (`diagramBox`) or **fully on-device** from the OCR text boxes (`detectDiagram.ts` — the
-   largest text-free band). The scanner crops it (`cropDiagram`) and the scene shows it as a
+   (`diagramBox`) or **fully on-device** (`detectDiagram.ts`) — a Skia content grid
+   (`contentGrid`, ink/color vs. blank paper) minus the OCR text boxes, taking the largest
+   connected non-text picture blob (handles inline pictures; falls back to the largest
+   text-free band). The scanner crops it (`cropDiagram`) and the scene shows it as a
    `ViroImage` "From your homework" panel. The crop is also sent to Rodin as **image-to-3D**
    input so the generated model matches the child's homework picture (text-to-3D otherwise).
 
