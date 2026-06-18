@@ -31,6 +31,7 @@ import { haptics } from '@/lib/haptics';
 import { homeworkParseSchema, type HomeworkParseResult } from '@/features/homework/schemas';
 import { parseHomeworkText } from '@/features/homework/parseHomeworkText';
 import { cropDiagram, enhanceForOcr, preprocessHomeworkImage } from './imagePrep';
+import { detectDiagramBox } from './detectDiagram';
 import { useHomeworkStore } from '@/features/homework/homeworkStore';
 import { buildXRScenePlan } from '@/features/tutor/tutorPrompts';
 import type { HomeworkQuestion, HomeworkScan, Subject } from '@/features/homework/types';
@@ -138,6 +139,8 @@ export default function HomeworkScannerScreen() {
         const text = detections.map((d) => d.text).join(' ').trim();
         if (text.length >= 8) {
           parse = parseHomeworkText(text);
+          // On-device diagram localization from the OCR boxes.
+          parse.diagramBox = detectDiagramBox(detections, processed.width, processed.height);
         }
       }
       // Fallback: cloud vision parse (reuse the enhanced base64 when available).
