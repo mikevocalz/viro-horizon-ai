@@ -10,12 +10,20 @@ import { Presets, Settings } from 'react-native-pulsar';
 
 let didEnable = false;
 
-/** Enables the haptics engine once for the app session. */
+/**
+ * Enables the haptics engine once for the app session.
+ *
+ * Pulsar auto-detects each device's capability level and degrades gracefully —
+ * iOS Core Haptics vs. the wide spread of Android actuators — so we lean on its
+ * runtime detection instead of branching per platform. We preload the rich
+ * preset we use for the immersive XR cue to minimize first-play latency.
+ */
 export function setupHaptics(): void {
   if (didEnable) {
     return;
   }
   Settings.enableHaptics(true);
+  Settings.preloadPresets(['bloom']);
   didEnable = true;
 }
 

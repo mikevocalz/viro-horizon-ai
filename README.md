@@ -63,7 +63,8 @@ token-by-token.
 
 Online mode uses the **Vercel AI SDK** (`ai` + `@ai-sdk/react`) talking to an Expo Router
 API route at `src/app/api/chat+api.ts`, which calls `streamText()` against
-`@ai-sdk/google`. This requires:
+`@ai-sdk/google` (default model `gemini-3-pro-preview`, override with
+`GOOGLE_CHAT_MODEL`). This requires:
 
 - `web.output: "server"` in `app.json` (API routes need a server runtime).
 - `GOOGLE_GENERATIVE_AI_API_KEY` in the server env (see `.env.example`).
