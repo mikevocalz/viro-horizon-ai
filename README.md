@@ -78,7 +78,8 @@ Streaming on native needs `expo/fetch` plus polyfills (`@ungap/structured-clone`
 
 The Studio tabs are **Tutor · Scan · Classify · XR**:
 
-1. **Scan** (`react-native-vision-camera`) captures a homework photo, then **on-device OCR**
+1. **Scan** (`react-native-vision-camera`) captures a homework photo, which is downscaled +
+   JPEG-compressed (`expo-image-manipulator`, `imagePrep.ts`) before **on-device OCR**
    (ExecuTorch CRAFT, `useOCR`) extracts the text locally and `parseHomeworkText` derives
    subject/topic/keywords/questions — no network. If OCR yields too little text it falls
    back to the Gemini vision parse route (`/api/homework/parse`). "Load sample" seeds a

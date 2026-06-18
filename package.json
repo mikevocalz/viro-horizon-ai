@@ -32,6 +32,7 @@
     "expo-haptics": "56.0.3",
     "expo-horizon-core": "55.0.1",
     "expo-image": "~56.0.11",
+    "expo-image-manipulator": "^56.0.19",
     "expo-image-picker": "56.0.18",
     "expo-linking": "~56.0.14",
     "expo-router": "56.2.11",

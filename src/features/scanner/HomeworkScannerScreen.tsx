@@ -30,6 +30,7 @@ import { OCR_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
 import { homeworkParseSchema, type HomeworkParseResult } from '@/features/homework/schemas';
 import { parseHomeworkText } from '@/features/homework/parseHomeworkText';
+import { preprocessHomeworkImage } from './imagePrep';
 import { useHomeworkStore } from '@/features/homework/homeworkStore';
 import { buildXRScenePlan } from '@/features/tutor/tutorPrompts';
 import type { HomeworkQuestion, HomeworkScan, Subject } from '@/features/homework/types';
@@ -110,7 +111,9 @@ export default function HomeworkScannerScreen() {
     setStatus('parsing');
     try {
       const file = await photo.capturePhotoToFile({}, {});
-      const uri = file.filePath.startsWith('file://') ? file.filePath : `file://${file.filePath}`;
+      const rawUri = file.filePath.startsWith('file://') ? file.filePath : `file://${file.filePath}`;
+      // Clean/compress before OCR; fall back to the raw capture if it fails.
+      const uri = await preprocessHomeworkImage(rawUri).catch(() => rawUri);
 
       let parse: HomeworkParseResult | undefined;
       // Primary: on-device OCR extraction.
