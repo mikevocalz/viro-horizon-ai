@@ -44,3 +44,6 @@ example
 
 # local env
 .env
+
+# react-native-runtimes generated entry
+.threaded-runtime/

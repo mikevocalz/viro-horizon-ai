@@ -36,3 +36,8 @@ than force-shipping something broken.
 - XR: `@reactvision/react-viro`; native-only (web split into `*.web.tsx`).
 - Quest/Horizon: `expo-horizon-core`; runtime checks via `src/lib/horizon.ts`.
 - Viro API guidance: use the ViroReact MCP server registered in `.mcp.json`.
+- Threaded rendering: heavy lists run on secondary runtimes via
+  `@react-native-runtimes/core` (`src/components/runtime/`). Data crosses the
+  runtime boundary through `src/state/shared/` (native `createSharedStore`, web
+  Zustand) — never a main-runtime store. Keep secondary-runtime components
+  self-contained (RN primitives + theme + shared store only; no navigation/ctx).

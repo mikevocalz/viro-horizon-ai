@@ -1,20 +1,16 @@
 /**
- * Image-classification screen state: the picked image and ranked predictions.
+ * Image-classification screen state (main runtime): the picked image URI.
+ * Predictions live in the cross-runtime store (`@/state/shared/predictions`)
+ * because the results list renders on a secondary runtime.
  */
 import { create } from 'zustand';
 
-export type Prediction = { label: string; score: number };
-
 type ClassifyStore = {
   imageUri: string | null;
-  predictions: Prediction[];
   setImage: (uri: string) => void;
-  setPredictions: (predictions: Prediction[]) => void;
 };
 
 export const useClassifyStore = create<ClassifyStore>((set) => ({
   imageUri: null,
-  predictions: [],
-  setImage: (uri) => set({ imageUri: uri, predictions: [] }),
-  setPredictions: (predictions) => set({ predictions }),
+  setImage: (uri) => set({ imageUri: uri }),
 }));

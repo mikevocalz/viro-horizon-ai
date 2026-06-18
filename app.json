@@ -56,6 +56,12 @@
         {
           "supportedDevices": "quest2|quest3|questpro"
         }
+      ],
+      [
+        "@react-native-runtimes/core",
+        {
+          "packages": ["@react-native-runtimes/state"]
+        }
       ]
     ],
     "experiments": {

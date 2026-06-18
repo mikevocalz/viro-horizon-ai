@@ -7,16 +7,17 @@
  *    fails to load.
  *  - Can be switched manually via the segmented control.
  *
- * Both engines stream token-by-token: on-device via `useLLM`'s `response`,
- * online via `useChat` (Vercel AI SDK) message parts.
+ * The message list renders on a dedicated secondary runtime (react-native-
+ * runtimes) so streaming token updates never block the main thread. This screen
+ * (main runtime) owns the engines and pushes the rendered conversation into the
+ * cross-runtime chat store; `ChatMessagesSurface` reads it.
  */
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -30,28 +31,20 @@ import { Send, Square } from 'lucide-react-native';
 
 import { GradientHeader } from '@/components/GradientHeader';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { ChatMessagesSurface } from '@/components/runtime/ChatMessagesSurface';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { CHAT_MODEL, executorchAvailable } from '@/lib/executorch';
 import { generateApiUrl } from '@/lib/api';
 import { haptics } from '@/lib/haptics';
 import { useChatStore } from '@/state/chatStore';
+import { setChatSurface } from '@/state/shared/chat';
+import type { DisplayMessage } from '@/state/shared/types';
 
 const SYSTEM_PROMPT =
   'You are a helpful, concise assistant running fully on-device. Keep answers short unless asked to elaborate.';
 
-type DisplayMessage = { id: string; role: string; content: string };
-
 function uiMessageText(message: UIMessage): string {
   return message.parts.filter(isTextUIPart).map((part) => part.text).join('');
-}
-
-function Bubble({ role, content }: { role: string; content: string }) {
-  const isUser = role === 'user';
-  return (
-    <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
-      <Text style={isUser ? styles.bubbleTextUser : styles.bubbleText}>{content}</Text>
-    </View>
-  );
 }
 
 export default function ChatScreen() {
@@ -60,7 +53,6 @@ export default function ChatScreen() {
   const setInput = useChatStore((s) => s.setInput);
   const clearInput = useChatStore((s) => s.clearInput);
   const setEngine = useChatStore((s) => s.setEngine);
-  const scrollRef = useRef<ScrollView>(null);
 
   // --- On-device engine ---
   const llm = useLLM({ model: CHAT_MODEL });
@@ -96,6 +88,32 @@ export default function ChatScreen() {
   const ready = isOnline ? true : llm.isReady;
   const canSend = ready && !isBusy && input.trim().length > 0;
 
+  const messages: DisplayMessage[] = useMemo(
+    () =>
+      isOnline
+        ? online.messages.map((m) => ({ id: m.id, role: m.role, content: uiMessageText(m) }))
+        : llm.messageHistory
+            .filter((m) => m.role !== 'system')
+            .map((m, i) => ({ id: `${m.role}-${i}`, role: m.role, content: m.content })),
+    [isOnline, online.messages, llm.messageHistory],
+  );
+
+  const streaming = !isOnline && llm.isGenerating ? llm.response : '';
+  const errorMessage = (isOnline ? online.error?.message : llm.error?.message) ?? '';
+
+  // Push the rendered conversation into the cross-runtime store consumed by the
+  // message-list surface.
+  useEffect(() => {
+    setChatSurface({
+      messages,
+      streaming,
+      emptyHint: isOnline
+        ? 'Ask anything — answered by Google Gemini.'
+        : 'Ask anything — inference never leaves the device.',
+      error: isOnline ? errorMessage : '',
+    });
+  }, [messages, streaming, isOnline, errorMessage]);
+
   const onSend = useCallback(async () => {
     const text = input.trim();
     if (!text || isBusy || !ready) {
@@ -123,18 +141,7 @@ export default function ChatScreen() {
     }
   }, [isOnline, online, llm]);
 
-  // Normalize both engines into a single render list.
-  const messages: DisplayMessage[] = isOnline
-    ? online.messages.map((m) => ({ id: m.id, role: m.role, content: uiMessageText(m) }))
-    : llm.messageHistory
-        .filter((m) => m.role !== 'system')
-        .map((m, i) => ({ id: `${m.role}-${i}`, role: m.role, content: m.content }));
-
-  const streamingBubble =
-    !isOnline && llm.isGenerating && llm.response ? llm.response : null;
-
   const deviceLoading = !isOnline && !llm.isReady;
-  const errorMessage = isOnline ? online.error?.message : llm.error?.message;
 
   return (
     <ScreenContainer>
@@ -154,9 +161,7 @@ export default function ChatScreen() {
           }}
           disabled={!executorchAvailable}
         >
-          <Text style={[styles.engineText, !isOnline && styles.engineTextActive]}>
-            On-device
-          </Text>
+          <Text style={[styles.engineText, !isOnline && styles.engineTextActive]}>On-device</Text>
         </Pressable>
         <Pressable
           style={[styles.enginePill, isOnline && styles.enginePillActive]}
@@ -184,27 +189,9 @@ export default function ChatScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
         >
-          <ScrollView
-            ref={scrollRef}
-            style={styles.flex}
-            contentContainerStyle={styles.messages}
-            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
-          >
-            {messages.length === 0 && !streamingBubble ? (
-              <Text style={styles.empty}>
-                {isOnline
-                  ? 'Ask anything — answered by Google Gemini.'
-                  : 'Ask anything — inference never leaves the device.'}
-              </Text>
-            ) : null}
-            {messages.map((m) => (
-              <Bubble key={m.id} role={m.role} content={m.content} />
-            ))}
-            {streamingBubble ? <Bubble role="assistant" content={streamingBubble} /> : null}
-            {isOnline && errorMessage ? (
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            ) : null}
-          </ScrollView>
+          <View style={styles.flex}>
+            <ChatMessagesSurface />
+          </View>
 
           <View style={styles.composer}>
             <TextInput
@@ -268,27 +255,6 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   loaderText: { color: Colors.textMuted, textAlign: 'center' },
-  messages: { padding: Spacing.lg, gap: Spacing.md },
-  empty: { color: Colors.textMuted, textAlign: 'center', marginTop: Spacing.xxl },
-  errorText: { color: Colors.danger, textAlign: 'center', marginTop: Spacing.sm },
-  bubble: {
-    maxWidth: '85%',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.lg,
-  },
-  bubbleUser: {
-    alignSelf: 'flex-end',
-    backgroundColor: Colors.accent,
-    borderBottomRightRadius: Radius.sm,
-  },
-  bubbleAssistant: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.surfaceElevated,
-    borderBottomLeftRadius: Radius.sm,
-  },
-  bubbleText: { color: Colors.text, fontSize: 15, lineHeight: 21 },
-  bubbleTextUser: { color: '#06122E', fontSize: 15, lineHeight: 21, fontWeight: '500' },
   composer: {
     flexDirection: 'row',
     alignItems: 'flex-end',

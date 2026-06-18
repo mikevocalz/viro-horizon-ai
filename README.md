@@ -74,6 +74,25 @@ API route at `src/app/api/chat+api.ts`, which calls `streamText()` against
 Streaming on native needs `expo/fetch` plus polyfills (`@ungap/structured-clone`,
 `@stardazed/streams-text-encoding`), loaded once in `src/lib/polyfills.ts`.
 
+## Threaded rendering (react-native-runtimes)
+
+The heavy list rendering for **Chat** and **Classify** runs on secondary JS
+runtimes (`@react-native-runtimes/core`), so streaming token updates and result
+bars never block the main thread (navigation, composer, pickers).
+
+- `src/components/runtime/*Surface.tsx` wrap a list in `<OnRuntime name=…>`;
+  the matching `*.web.tsx` renders inline (web has one runtime, no Nitro).
+- A secondary runtime is an isolated Hermes instance, so data crosses via the
+  cross-runtime stores in `src/state/shared/` (`@react-native-runtimes/state`'s
+  `createSharedStore` on native; a plain Zustand store on web). The screens
+  (main runtime) write; the surfaces (secondary runtime) read.
+- `metro.config.js` wraps the config with `withThreadedRuntime` (Expo's babel
+  transformer is preserved). The Expo config plugin registers
+  `@react-native-runtimes/state` in the secondary runtime.
+
+> `@react-native-runtimes/*` are `0.1.0-alpha` and require a native (Nitro) build
+> — validate threaded behavior with `expo run:*`, not Expo Go.
+
 ## Horizon OS
 
 `expo-horizon-core`'s config plugin adds the `quest` product flavor; runtime detection
