@@ -30,7 +30,7 @@ import { OCR_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
 import { homeworkParseSchema, type HomeworkParseResult } from '@/features/homework/schemas';
 import { parseHomeworkText } from '@/features/homework/parseHomeworkText';
-import { preprocessHomeworkImage } from './imagePrep';
+import { enhanceForOcr, preprocessHomeworkImage } from './imagePrep';
 import { useHomeworkStore } from '@/features/homework/homeworkStore';
 import { buildXRScenePlan } from '@/features/tutor/tutorPrompts';
 import type { HomeworkQuestion, HomeworkScan, Subject } from '@/features/homework/types';
@@ -112,26 +112,30 @@ export default function HomeworkScannerScreen() {
     try {
       const file = await photo.capturePhotoToFile({}, {});
       const rawUri = file.filePath.startsWith('file://') ? file.filePath : `file://${file.filePath}`;
-      // Clean/compress before OCR; fall back to the raw capture if it fails.
-      const uri = await preprocessHomeworkImage(rawUri).catch(() => rawUri);
+      // 1) downscale + compress (preview + light input), 2) grayscale+contrast for OCR.
+      const processedUri = await preprocessHomeworkImage(rawUri).catch(() => rawUri);
+      const enhancedBase64 = await enhanceForOcr(processedUri).catch(() => null);
+      const ocrInput = enhancedBase64 ?? processedUri;
 
       let parse: HomeworkParseResult | undefined;
       // Primary: on-device OCR extraction.
       if (ocr.isReady) {
-        const detections = await ocr.forward(uri);
+        const detections = await ocr.forward(ocrInput);
         const text = detections.map((d) => d.text).join(' ').trim();
         if (text.length >= 8) {
           parse = parseHomeworkText(text);
         }
       }
-      // Fallback: cloud vision parse.
+      // Fallback: cloud vision parse (reuse the enhanced base64 when available).
       if (!parse) {
-        const base64 = await FileSystem.readAsStringAsync(uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+        const base64 =
+          enhancedBase64 ??
+          (await FileSystem.readAsStringAsync(processedUri, {
+            encoding: FileSystem.EncodingType.Base64,
+          }));
         parse = await parseHomeworkImage(base64);
       }
-      finishScan(uri, parse);
+      finishScan(processedUri, parse);
     } catch {
       setError('Could not read or parse the homework. Try again, or load the sample.');
     }
