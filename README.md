@@ -74,6 +74,50 @@ API route at `src/app/api/chat+api.ts`, which calls `streamText()` against
 Streaming on native needs `expo/fetch` plus polyfills (`@ungap/structured-clone`,
 `@stardazed/streams-text-encoding`), loaded once in `src/lib/polyfills.ts`.
 
+## Homework tutoring + generated XR
+
+The Studio tabs are **Tutor · Scan · Classify · XR**:
+
+1. **Scan** (`react-native-vision-camera`) captures a homework photo → `/api/homework/parse`
+   (Gemini) extracts subject/topic/keywords/questions. Offline? "Load sample" seeds a
+   solar-system scan so the whole flow is demoable without camera/keys.
+2. A deterministic planner (`buildXRScenePlan`) produces an `XRScenePlan` + a
+   `RodinGenerationPlan`. For solar-system topics it sets `shouldOfferXR`.
+3. **Tutor** (the converted chat — on-device + Gemini fallback, tutor system prompt)
+   shows a **Study in XR** CTA card.
+4. Tapping it routes to **XR**, which opens `SolarSystemGeneratedScene` *instantly* with
+   procedural sphere placeholders, lights, spin, labels, and a floating tutor panel —
+   while `runXRGeneration` drives a Rodin job (`/api/xr/rodin/*`).
+5. Each generated GLB streams into the cross-runtime store and `GeneratedModelSlot` swaps
+   the placeholder for `Viro3DObject` without resetting the scene; GLB load errors revert
+   to the placeholder. No Horizon fallback — the scene renders on all targets.
+
+**Rodin seam:** components/routes depend only on `RodinProvider` (`src/services/rodin/`).
+`RealRodinProvider` calls Hyper3D Gen-2.5 (start → poll `status` → `download` GLB, one task
+per asset); `MockRodinProvider` (time-based) runs until `RODIN_API_KEY` is set.
+TODO markers flag where the real mesh-optimization stage and Gen-2.5 tier confirmation go.
+
+## Known-risk matrix (non-stable / forced pins)
+
+These are the dependencies that aren't plain stable releases. Each only fully
+validates in a **native dev build** (`expo run:ios` / `expo run:android`) — not
+Expo Go, not `tsc`.
+
+| Pin | Why it's a risk | What validates it |
+| --- | --- | --- |
+| `react-native@0.86.0` | Forced via `overrides` (Expo SDK 56 recommends 0.85.3) | Native build of the whole app |
+| `@reactvision/react-viro@2.56.0` | Peer caps at Expo <56 / RN <0.84; native modules built ≤0.83 | Viro AR/XR scene compiles + renders |
+| `@react-native-runtimes/core` + `/state` `0.1.0-alpha` | Pre-release; Nitro native; secondary-runtime styling unproven | Chat/Classify lists render on threads |
+| `react-native-nitro-modules@0.35.9` | Native layer shared by runtimes + Vision Camera | All Nitro modules co-compile |
+| `react-native-vision-camera@5.0.11` | Nitro-based; needs config plugin + native build | Homework scanner captures photos |
+| `@shopify/react-native-skia@2.6.3-next.1` | `@next` (Graphite backend) prerelease | Gradient headers render |
+| `nativewind@5.0.0-preview.4` (+ `tailwindcss@4`, `react-native-css@3`) | Preview; rewrites `react-native` imports app-wide | `className` styling renders |
+| `expo-horizon-core@55.0.1` | Versioned to SDK 55, used on SDK 56 | Quest build flavor + `isHorizonDevice()` |
+| Rodin 3D generation (Hyper3D Gen-2.5) | `RealRodinProvider` implemented; `MockRodinProvider` used until `RODIN_API_KEY` is set | Real generation with creds + native GLB load |
+
+> If the native build fails, suspect a collision between the Nitro consumers
+> (runtimes + Vision Camera) or Viro vs RN 0.86 first.
+
 ## Styling (NativeWind v5 / Tailwind v4)
 
 Main-thread screens are styled with NativeWind v5 (`className`); `src/global.css`

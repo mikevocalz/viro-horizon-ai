@@ -63,6 +63,12 @@
         {
           "packages": ["@react-native-runtimes/state"]
         }
+      ],
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "Viro Horizon AI uses the camera to scan your homework."
+        }
       ]
     ],
     "experiments": {
