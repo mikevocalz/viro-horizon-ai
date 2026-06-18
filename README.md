@@ -54,6 +54,25 @@ native side compiles against 0.86. Install with `npm install --legacy-peer-deps`
 (`src/app/_layout.tsx`). Models download lazily on first use; manage local storage from
 the **Models** screen.
 
+## Hybrid chat (on-device + online fallback)
+
+The Chat tab runs **on-device** (ExecuTorch / Qwen3 0.6B) by default and **falls back to
+online** (Google Gemini) when the device runtime is unavailable or the model fails to
+load. You can also switch engines manually via the segmented control. Both stream
+token-by-token.
+
+Online mode uses the **Vercel AI SDK** (`ai` + `@ai-sdk/react`) talking to an Expo Router
+API route at `src/app/api/chat+api.ts`, which calls `streamText()` against
+`@ai-sdk/google`. This requires:
+
+- `web.output: "server"` in `app.json` (API routes need a server runtime).
+- `GOOGLE_GENERATIVE_AI_API_KEY` in the server env (see `.env.example`).
+- A host for the API route in production — set `EXPO_PUBLIC_API_BASE_URL` to its origin.
+  In development the app derives the URL from the Expo dev server.
+
+Streaming on native needs `expo/fetch` plus polyfills (`@ungap/structured-clone`,
+`@stardazed/streams-text-encoding`), loaded once in `src/lib/polyfills.ts`.
+
 ## Horizon OS
 
 `expo-horizon-core`'s config plugin adds the `quest` product flavor; runtime detection

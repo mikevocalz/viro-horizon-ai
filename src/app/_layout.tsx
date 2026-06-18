@@ -7,6 +7,8 @@
  *  - Provide the outer navigation shell: a Drawer whose first route is the
  *    3-tab Studio group, followed by Models / Profile / Settings.
  */
+import '@/lib/polyfills';
+
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
