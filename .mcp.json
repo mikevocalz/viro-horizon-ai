@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "viro": {
+      "type": "http",
+      "url": "https://mcp.reactvision.xyz/viro"
+    }
+  }
+}
