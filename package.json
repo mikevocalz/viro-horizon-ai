@@ -1,0 +1,62 @@
+{
+  "name": "viro-horizon-ai",
+  "main": "expo-router/entry",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "lint": "expo lint"
+  },
+  "dependencies": {
+    "@react-navigation/drawer": "7.12.2",
+    "@react-navigation/native": "7.3.3",
+    "@reactvision/react-viro": "2.56.0",
+    "@shopify/react-native-skia": "2.6.3-next.1",
+    "expo": "56.0.12",
+    "expo-asset": "56.0.17",
+    "expo-constants": "~56.0.18",
+    "expo-device": "56.0.4",
+    "expo-file-system": "56.0.8",
+    "expo-font": "~56.0.7",
+    "expo-haptics": "56.0.3",
+    "expo-horizon-core": "55.0.1",
+    "expo-image": "~56.0.11",
+    "expo-image-picker": "56.0.18",
+    "expo-linking": "~56.0.14",
+    "expo-router": "56.2.11",
+    "expo-splash-screen": "~56.0.10",
+    "expo-status-bar": "~56.0.4",
+    "expo-system-ui": "~56.0.5",
+    "lucide-react-native": "^1.21.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-executorch": "0.9.2",
+    "react-native-executorch-expo-resource-fetcher": "0.9.1",
+    "react-native-gesture-handler": "~2.31.1",
+    "react-native-pulsar": "^1.6.1",
+    "react-native-reanimated": "4.3.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-svg": "^15.15.4",
+    "react-native-web": "~0.21.0",
+    "react-native-worklets": "0.8.3"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "@reactvision/react-viro": {
+      "react": "19.2.3",
+      "react-native": "0.86.0",
+      "expo": "56.0.12"
+    }
+  }
+}
