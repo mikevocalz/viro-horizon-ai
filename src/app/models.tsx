@@ -5,12 +5,12 @@
 import { useCallback, useEffect } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { ExpoResourceFetcher } from 'react-native-executorch-expo-resource-fetcher';
-import { Boxes, Cpu, Image as ImageIcon, Trash2 } from 'lucide-react-native';
+import { Boxes, Cpu, ScanText, Trash2 } from 'lucide-react-native';
 
 import { GradientHeader } from '@/components/GradientHeader';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { Colors } from '@/constants/theme';
-import { CHAT_MODEL, CLASSIFICATION_MODEL } from '@/lib/executorch';
+import { CHAT_MODEL, OCR_MODEL } from '@/lib/executorch';
 import { haptics } from '@/lib/haptics';
 import { useModelsStore } from '@/state/modelsStore';
 
@@ -27,15 +27,15 @@ const MODELS: ModelCard[] = [
     key: 'chat',
     name: CHAT_MODEL.modelName,
     task: 'Text generation',
-    detail: 'Conversational LLM running locally via XNNPACK.',
+    detail: 'Conversational tutor LLM running locally via XNNPACK.',
     icon: Cpu,
   },
   {
-    key: 'classify',
-    name: CLASSIFICATION_MODEL.modelName,
-    task: 'Image classification',
-    detail: 'EfficientNet V2-S over the ImageNet-1k label set.',
-    icon: ImageIcon,
+    key: 'ocr',
+    name: OCR_MODEL.modelName,
+    task: 'On-device OCR',
+    detail: 'CRAFT detector + recognizer for reading scanned homework text.',
+    icon: ScanText,
   },
 ];
 
@@ -43,7 +43,8 @@ const MANAGED_SOURCES = [
   CHAT_MODEL.modelSource,
   CHAT_MODEL.tokenizerSource,
   CHAT_MODEL.tokenizerConfigSource,
-  CLASSIFICATION_MODEL.modelSource,
+  OCR_MODEL.detectorSource,
+  OCR_MODEL.recognizerSource,
 ];
 
 export default function ModelsScreen() {

@@ -74,7 +74,7 @@ export default function SettingsScreen() {
             </Text>
             <Text className="text-muted">Version {Constants.expoConfig?.version ?? '1.0.0'}</Text>
             <Text className="text-muted">
-              On-device LLM chat, image classification, and ViroReact XR.
+              Homework tutor, on-device scan &amp; OCR, and ViroReact XR.
             </Text>
           </View>
         </View>

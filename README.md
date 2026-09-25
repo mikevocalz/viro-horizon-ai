@@ -7,9 +7,9 @@ targeting phones and **Meta Quest / Horizon OS**.
 
 - **Drawer** (outer shell): `Studio` · `Models` · `Profile` · `Settings`
 - **Studio** is a 3-tab group:
-  1. **Chat** — on-device LLM chat (`useLLM`, Qwen3 0.6B)
-  2. **Classify** — on-device image classification (`useClassification`, EfficientNet V2-S)
-  3. **XR** — ViroReact AR scene (with a Quest fallback)
+  1. **Tutor** — homework tutor chat (Gemini primary, on-device `useLLM` fallback)
+  2. **Scan** — homework scanner (Vision Camera + on-device OCR)
+  3. **XR** — homework-driven generated ViroReact scene
 
 Tab presses and key interactions fire haptics via **`react-native-pulsar`**.
 
@@ -76,7 +76,7 @@ Streaming on native needs `expo/fetch` plus polyfills (`@ungap/structured-clone`
 
 ## Homework tutoring + generated XR
 
-The Studio tabs are **Tutor · Scan · Classify · XR**:
+The Studio tabs are **Tutor · Scan · XR**:
 
 1. **Scan** (`react-native-vision-camera`) captures a homework photo, which is downscaled +
    JPEG-compressed (`expo-image-manipulator`) and then **grayscale + contrast enhanced via an
@@ -118,7 +118,7 @@ Expo Go, not `tsc`.
 | --- | --- | --- |
 | `react-native@0.86.0` | Forced via `overrides` (Expo SDK 56 recommends 0.85.3) | Native build of the whole app |
 | `@reactvision/react-viro@2.56.0` | Peer caps at Expo <56 / RN <0.84; native modules built ≤0.83 | Viro AR/XR scene compiles + renders |
-| `@react-native-runtimes/core` + `/state` `0.1.0-alpha` | Pre-release; Nitro native; secondary-runtime styling unproven | Chat/Classify lists render on threads |
+| `@react-native-runtimes/core` + `/state` `0.1.0-alpha` | Pre-release; Nitro native; secondary-runtime styling unproven | Tutor message list renders on a thread |
 | `react-native-nitro-modules@0.35.9` | Native layer shared by runtimes + Vision Camera | All Nitro modules co-compile |
 | `react-native-vision-camera@5.0.11` | Nitro-based; needs config plugin + native build | Homework scanner captures photos |
 | `@shopify/react-native-skia@2.6.3-next.1` | `@next` (Graphite backend) prerelease | Gradient headers render |
@@ -152,9 +152,9 @@ imports Tailwind v4 + `nativewind/theme` and defines the brand palette via
 
 ## Threaded rendering (react-native-runtimes)
 
-The heavy list rendering for **Chat** and **Classify** runs on secondary JS
-runtimes (`@react-native-runtimes/core`), so streaming token updates and result
-bars never block the main thread (navigation, composer, pickers).
+The heavy Tutor message-list rendering runs on a secondary JS runtime
+(`@react-native-runtimes/core`), so streaming token updates never block the main
+thread (navigation, composer, the engine toggle).
 
 - `src/components/runtime/*Surface.tsx` wrap a list in `<OnRuntime name=…>`;
   the matching `*.web.tsx` renders inline (web has one runtime, no Nitro).

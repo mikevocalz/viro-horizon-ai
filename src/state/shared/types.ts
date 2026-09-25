@@ -11,21 +11,9 @@ export type ChatSurfaceState = {
   error: string;
 };
 
-export type Prediction = { label: string; score: number };
-
-export type PredictionsSurfaceState = {
-  predictions: Prediction[];
-  generating: boolean;
-};
-
 export const INITIAL_CHAT_SURFACE: ChatSurfaceState = {
   messages: [],
   streaming: '',
   emptyHint: '',
   error: '',
-};
-
-export const INITIAL_PREDICTIONS_SURFACE: PredictionsSurfaceState = {
-  predictions: [],
-  generating: false,
 };

@@ -1,13 +1,11 @@
 /**
  * Online tutor endpoint — the fallback used when on-device inference is
  * unavailable. Streams a Google Gemini response back to the `useChat` client
- * using the homework tutor system prompt.
+ * using the homework tutor system prompt, augmented with the scanned homework
+ * context the client sends in the request body.
  *
  * Requires `GOOGLE_GENERATIVE_AI_API_KEY` in the server environment (read
  * automatically by `@ai-sdk/google`).
- *
- * TODO(tutor): forward the active homework topic/questions in the request body
- * so the online path has the same context the on-device path gets via configure().
  */
 import { google } from '@ai-sdk/google';
 import { convertToModelMessages, streamText, type UIMessage } from 'ai';
@@ -18,11 +16,18 @@ import { TUTOR_SYSTEM_PROMPT } from '@/features/tutor/tutorPrompts';
 const MODEL_ID = process.env.GOOGLE_CHAT_MODEL ?? 'gemini-3-pro-preview';
 
 export async function POST(request: Request): Promise<Response> {
-  const { messages }: { messages: UIMessage[] } = await request.json();
+  const { messages, homeworkContext } = (await request.json()) as {
+    messages: UIMessage[];
+    homeworkContext?: string;
+  };
+
+  const system = homeworkContext
+    ? `${TUTOR_SYSTEM_PROMPT}\n\n${homeworkContext}`
+    : TUTOR_SYSTEM_PROMPT;
 
   const result = streamText({
     model: google(MODEL_ID),
-    system: TUTOR_SYSTEM_PROMPT,
+    system,
     messages: await convertToModelMessages(messages),
   });
 
