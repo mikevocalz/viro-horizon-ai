@@ -32,7 +32,7 @@ export const haptics = {
   selection: () => Presets.System.selection(),
   /** A message was committed to the conversation. */
   send: () => Presets.System.impactLight(),
-  /** A generation / classification finished successfully. */
+  /** A generation / scan finished successfully. */
   success: () => Presets.System.notificationSuccess(),
   /** Something failed (model error, denied permission). */
   error: () => Presets.System.notificationError(),

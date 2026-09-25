@@ -62,14 +62,20 @@ export default function TutorScreen() {
   );
   const online = useChat({ transport });
 
-  // Homework-aware tutor system prompt (on-device path).
-  const systemPrompt = useMemo(() => {
+  // Homework context shared by both engines.
+  const homeworkContext = useMemo(() => {
     if (!scan) {
-      return TUTOR_SYSTEM_PROMPT;
+      return '';
     }
     const qs = questions.map((q, i) => `${i + 1}. ${q.prompt}`).join('\n');
-    return `${TUTOR_SYSTEM_PROMPT}\n\nScanned homework topic: ${scan.topic} (subject: ${scan.subject}).\nDetected questions:\n${qs}`;
+    return `Scanned homework topic: ${scan.topic} (subject: ${scan.subject}).\nDetected questions:\n${qs}`;
   }, [scan, questions]);
+
+  // On-device tutor system prompt (online path sends homeworkContext in the body).
+  const systemPrompt = useMemo(
+    () => (homeworkContext ? `${TUTOR_SYSTEM_PROMPT}\n\n${homeworkContext}` : TUTOR_SYSTEM_PROMPT),
+    [homeworkContext],
+  );
 
   useEffect(() => {
     if (llm.isReady) {
@@ -123,7 +129,10 @@ export default function TutorScreen() {
     haptics.send();
     try {
       if (isOnline) {
-        await online.sendMessage({ text });
+        await online.sendMessage(
+          { text },
+          homeworkContext ? { body: { homeworkContext } } : undefined,
+        );
       } else {
         await llm.sendMessage(text);
       }
@@ -131,7 +140,7 @@ export default function TutorScreen() {
     } catch {
       haptics.error();
     }
-  }, [input, isBusy, ready, isOnline, online, llm, clearInput]);
+  }, [input, isBusy, ready, isOnline, online, llm, clearInput, homeworkContext]);
 
   const stop = useCallback(() => {
     if (isOnline) {
