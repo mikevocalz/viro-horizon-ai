@@ -10,7 +10,13 @@
     "newArchEnabled": true,
     "ios": {
       "icon": "./assets/expo.icon",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
+        "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos",
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use your camera",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +25,11 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.dvntproject2.virohorizonai"
     },
     "web": {
       "bundler": "metro",
@@ -48,7 +58,10 @@
         "@reactvision/react-viro",
         {
           "android": {
-            "xRMode": ["AR", "QUEST"]
+            "xRMode": [
+              "AR",
+              "QUEST"
+            ]
           }
         }
       ],
@@ -61,15 +74,12 @@
       [
         "@react-native-runtimes/core",
         {
-          "packages": ["@react-native-runtimes/state"]
+          "packages": [
+            "@react-native-runtimes/state"
+          ]
         }
       ],
-      [
-        "react-native-vision-camera",
-        {
-          "cameraPermissionText": "Viro Horizon AI uses the camera to scan your homework."
-        }
-      ]
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,
