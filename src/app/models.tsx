@@ -4,6 +4,7 @@
  */
 import { useCallback, useEffect } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { models } from 'react-native-executorch';
 import { ExpoResourceFetcher } from 'react-native-executorch-expo-resource-fetcher';
 import { Boxes, Cpu, ScanText, Trash2 } from 'lucide-react-native';
 
@@ -47,6 +48,12 @@ const MANAGED_SOURCES = [
   OCR_MODEL.recognizerSource,
 ];
 
+// Retired sources kept only so "Clear downloaded models" can remove files
+// downloaded by earlier app versions (the classifier is no longer used).
+const LEGACY_SOURCES = [
+  models.classification.efficientnet_v2_s().modelSource,
+];
+
 export default function ModelsScreen() {
   const fileCount = useModelsStore((s) => s.fileCount);
   const busy = useModelsStore((s) => s.busy);
@@ -69,7 +76,10 @@ export default function ModelsScreen() {
   const clear = useCallback(async () => {
     setBusy(true);
     try {
-      await ExpoResourceFetcher.deleteResources(...MANAGED_SOURCES);
+      await ExpoResourceFetcher.deleteResources(
+        ...MANAGED_SOURCES,
+        ...LEGACY_SOURCES,
+      );
       haptics.success();
     } catch {
       haptics.error();
