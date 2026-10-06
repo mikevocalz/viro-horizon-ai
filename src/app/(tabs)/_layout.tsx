@@ -1,15 +1,14 @@
 /**
  * Studio tab group — the first route inside the outer drawer.
  *
- *  1. Tutor     — homework tutor (on-device ExecuTorch + online Gemini fallback)
- *  2. Scan      — homework scanner (React Native Vision Camera)
- *  3. Classify  — on-device image classification (ExecuTorch)
- *  4. XR        — homework-driven generated ViroReact scene
+ *  1. Tutor     — homework tutor (Gemini primary + on-device ExecuTorch fallback)
+ *  2. Scan      — homework scanner (React Native Vision Camera + on-device OCR)
+ *  3. XR        — homework-driven generated ViroReact scene
  *
  * Every tab press fires a Pulsar selection haptic.
  */
 import { Tabs } from 'expo-router';
-import { Box, GraduationCap, ScanEye, ScanLine } from 'lucide-react-native';
+import { Box, GraduationCap, ScanLine } from 'lucide-react-native';
 
 import { Colors } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
@@ -45,13 +44,6 @@ export default function TabsLayout() {
         options={{
           title: 'Scan',
           tabBarIcon: ({ color, size }) => <ScanLine color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="classify"
-        options={{
-          title: 'Classify',
-          tabBarIcon: ({ color, size }) => <ScanEye color={color} size={size} />,
         }}
       />
       <Tabs.Screen

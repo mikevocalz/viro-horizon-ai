@@ -33,11 +33,6 @@ export const executorchAvailable = isAvailable;
 export const CHAT_MODEL = models.llm.qwen3_0_6b();
 
 /**
- * Image classification model. EfficientNet V2 (S) over the ImageNet-1k labels.
- */
-export const CLASSIFICATION_MODEL = models.classification.efficientnet_v2_s();
-
-/**
  * On-device OCR (CRAFT detector + recognizer) for extracting homework text from a
  * scanned photo without a network round-trip.
  */
